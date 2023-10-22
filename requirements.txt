@@ -1,0 +1,8 @@
+pandas
+spacy
+numpy
+scikit-learn
+rich
+seaborn
+matplotlib
+tabulate
