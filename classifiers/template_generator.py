@@ -24,7 +24,7 @@ class Genders:
 
 def read_compact_format():
     df = pd.read_csv(
-        os.path.join(os.getcwd(), "cleaned2.csv"),
+        os.path.join(os.getcwd(), "dataset", "cleaned2.csv"),
         dtype={
             "key": str,
             "press_time": np.float64,
