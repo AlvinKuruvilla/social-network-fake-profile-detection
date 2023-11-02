@@ -20,9 +20,7 @@ The functions to extract features are in the features/word_parser file for word 
 ### Verifiers
 
 Template Generator: helpers to process our compact csv file of keystroke data
-Verifier.py: A base class for all verifier implementations to inherit from
-Each verifier has their own python implementation file, however, verifiers_library.py is the recommended way to use them
-as it has all of the verifier algorithms implemented as class methods for ease of use
+Verifier Library: verifier algorithms implemented as class methods for ease of use
 
 ### Fusion
 
@@ -60,3 +58,4 @@ Specifies which gender data to include (we store a mapping in the code of what g
     - **all**: Include all ids.
     - **male**: Include all male ids.
     - **other**: Include all other ids.
+![Workflow] (media/Workflow.png)
