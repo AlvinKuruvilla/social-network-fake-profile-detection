@@ -4,41 +4,51 @@ import spacy
 import numpy as np
 
 
-def get_user_by_platform(user_id, platform_id):
-    df = pd.read_csv(
-        os.path.join(os.getcwd(), "cleaned.csv"),
-        dtype={
-            "key": str,
-            "press_time": np.float64,
-            "release_time": np.float64,
-            "platform_id": np.uint8,
-            "session_id": np.uint8,
-            "user_ids": np.uint8,
-        },
-    )
-    return df[(df["user_ids"] == user_id) & (df["platform_id"] == platform_id)]
-
-
 # https://stackoverflow.com/questions/18172851/deleting-dataframe-row-in-pandas-based-on-column-value
 def remove_invalid_keystrokes(df):
+    """
+    A helper function that takes as input a dataframe, and returns a new dataframe
+    no longer containing rows with the string "<0>".
+
+    Parameters:
+    - df: a pandas DataFrame.
+
+    Returns:
+    - DataFrame without rows containing the string "<0>".
+    """
     # A helper function that takes as input a dataframe, and return a new
     # dataframe no longer containing rows with the string "<0>"
     return df.loc[df["key"] != "<0>"]
 
 
-# This cell contains helper functions for word level feature generation.
-# Most of these functions are currently unused but we may want to keep them
-# around for future feature extraction
-# The main function of note is the get_words() function which parses the raw
-# sentences we generate from users' typing logs and extract words using the
-# the spacy tokenizer
-
-
 def clean_letters(letters):
+    """
+    Removes single quotation marks from each item in a list of letters/strings.
+
+    Parameters:
+    - letters (list[str]): A list of strings or letters, each potentially wrapped with single quotation marks.
+
+    Returns:
+    - list[str]: A list of strings or letters without the surrounding single quotation marks.
+
+    Note:
+    This function is designed to clean up lists where each item might be wrapped with single quotation marks
+    (e.g., ["'a'", "'b'", "'c'"] to ["a", "b", "c"]).
+
+    Example:
+    >>> clean_letters(["'a'", "'b'", "'hello'"])
+    ['a', 'b', 'hello']
+
+    """
     return [item.strip("'") for item in letters]
 
 
 class SentenceParser:
+    """Parses our dataset into best-effort sentences by trying to account for punctuation.
+
+    We them use the spacy tokenizer to tokenize the best-effort sentences into words for word level features
+    """
+
     def __init__(self, csv_file_path: str):
         self.csv_file_path = csv_file_path
 

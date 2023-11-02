@@ -2,7 +2,21 @@ from collections import defaultdict
 
 
 def create_kht_data_from_df(df):
-    # Compute KHT as the difference between the press and release times for the instance of the key
+    """
+    Computes Key Hold Time (KHT) data from a given dataframe.
+
+    Parameters:
+    - df (pandas.DataFrame): A dataframe with columns "key", "press_time", and "release_time",
+      where each row represents an instance of a key press and its associated press and release times.
+
+    Returns:
+    - dict: A dictionary where keys are individual key characters and values are lists containing
+      computed KHT values (difference between the release time and press time) for each instance of the key.
+
+    Note:
+    KHT is defined as the difference between the release time and the press time for a given key instance.
+    This function computes the KHT for each key in the dataframe and aggregates the results by key.
+    """
     kht_dict = defaultdict(list)
     for i, row in df.iterrows():
         kht_dict[row["key"]].append(row["release_time"] - row["press_time"])
@@ -10,6 +24,27 @@ def create_kht_data_from_df(df):
 
 
 def create_kit_data_from_df(df, kit_feature_type):
+    """
+    Computes Key Interval Time (KIT) data from a given dataframe based on a specified feature type.
+
+    Parameters:
+    - df (pandas.DataFrame): A dataframe with columns "key", "press_time", and "release_time",
+      where each row represents an instance of a key press and its associated press and release times.
+
+    - kit_feature_type (int): Specifies the type of KIT feature to compute. The valid values are:
+      1: Time between release of the first key and press of the second key.
+      2: Time between release of the first key and release of the second key.
+      3: Time between press of the first key and press of the second key.
+      4: Time between press of the first key and release of the second key.
+
+    Returns:
+    - dict: A dictionary where keys are pairs of consecutive key characters and values are lists containing
+      computed KIT values based on the specified feature type for each instance of the key pair.
+
+    Note:
+    This function computes the KIT for each pair of consecutive keys in the dataframe and aggregates
+    the results by key pair. The method for computing the KIT is determined by the `kit_feature_type` parameter.
+    """
     kit_dict = defaultdict(list)
     if df.empty:
         # print("dig deeper: dataframe is empty!")
@@ -36,6 +71,23 @@ def create_kit_data_from_df(df, kit_feature_type):
 
 
 def word_hold(word_list, raw_df):
+    """
+    Computes best-effort Word Hold Time (WH) for each word in a given word list from a raw dataframe of keystrokes.
+    A word's WH is defined as the time difference between the release of its last character and the press
+    of its first character. Non-printing keys (e.g., Shift) are currently not handled.
+
+    Parameters:
+    - word_list (list of str): A list of words for which the WH needs to be computed.
+      The words are generated from the SentenceParser's make_words function.
+
+    - raw_df (pandas.DataFrame): A dataframe with columns "key", "press_time", and "release_time",
+      where each row represents an instance of a key press and its associated press and release times.
+
+    Returns:
+    - dict: A dictionary where keys are words from the word_list and values are lists containing
+      computed WH values (difference between the release time of the last key and the press time
+      of the first key) for each instance of the word.
+    """
     wh = defaultdict(list)
     # The word_list needs to be in the same order as they would
     # sequentially appear in the dataframe

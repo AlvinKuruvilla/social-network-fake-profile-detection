@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class StepFunction:
     """
     A basic step function.
@@ -107,10 +108,3 @@ class ECDF(StepFunction):
         nobs = len(x)
         y = np.linspace(1.0 / nobs, 1, nobs)
         super(ECDF, self).__init__(x, y, side=side, sorted=True)
-
-        # TODO: make `step` an arg and have a linear interpolation option?
-        # This is the path with `step` is True
-        # If `step` is False, a previous version of the code read
-        #  `return interp1d(x,y,drop_errors=False,fill_values=ival)`
-        # which would have raised a NameError if hit, so would need to be
-        # fixed.  See GH#5701.

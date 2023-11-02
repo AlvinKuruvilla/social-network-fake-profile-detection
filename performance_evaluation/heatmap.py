@@ -20,6 +20,8 @@ sys.path.insert(0, path)
 
 
 class VerifierType(enum.Enum):
+    """Enum class representing the different types of verifiers available."""
+
     RELATIVE = 1
     SIMILARITY = 2
     SIMILARITY_UNWEIGHTED = 3
@@ -28,6 +30,37 @@ class VerifierType(enum.Enum):
 
 
 def get_user_by_platform(user_id, platform_id, session_id=None):
+    """
+    Retrieve data for a given user and platform, with an optional session_id filter.
+
+    Parameters:
+    - user_id (int): Identifier for the user.
+    - platform_id (int or list[int]): Identifier for the platform.
+      If provided as a list, it should contain two integers specifying
+      an inclusive range to search between.
+    - session_id (int or list[int], optional): Identifier for the session.
+      If provided as a list, it can either specify an inclusive range with
+      two integers or provide multiple session IDs to filter by.
+
+    Returns:
+    - DataFrame: Filtered data matching the given criteria.
+
+    Notes:
+    - When providing a list for platform_id or session_id to specify a range,
+      the order of the two integers does not matter.
+    - When providing a list with more than two integers for session_id,
+      it will filter by those exact session IDs.
+
+    Raises:
+    - AssertionError: If platform_id or session_id list does not follow the expected format.
+
+    Examples:
+    >>> df = get_user_by_platform(123, 1)
+    >>> df = get_user_by_platform(123, [1, 5])
+    >>> df = get_user_by_platform(123, 1, [2, 6])
+    >>> df = get_user_by_platform(123, 1, [2, 3, 4])
+
+    """
     # Get all of the data for a user amd platform with am optional session_id
 
     # print(f"user_id:{user_id}", end=" | ")
@@ -79,7 +112,11 @@ def get_user_by_platform(user_id, platform_id, session_id=None):
 
 
 class HeatMap:
-    # A heatmap generates the representative matrices for KHT, KIT, optionally word level features, or all of them
+    """
+    A heatmap generates the representative matrices for KHT, KIT, optionally word level features, or all of them
+    and making a heatmap plot out of it
+    """
+
     def __init__(self, verifier_type, p1=10, p2=10):
         self.verifier_type = verifier_type  # The verifier class to be used
         self.p1_threshold = p1
@@ -91,6 +128,10 @@ class HeatMap:
     def make_kht_matrix(
         self, enroll_platform_id, probe_platform_id, enroll_session_id, probe_session_id
     ):
+        """
+        Make a matrix of KHT features from the enrollment and probe id's and
+        their respective session id's
+        """
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
         #     raise ValueError("Platform ID must be between 1 and 3")
 
@@ -132,6 +173,11 @@ class HeatMap:
         probe_session_id,
         kit_feature_type,
     ):
+        """
+        Make a matrix of KIT features from the enrollment and probe id's,
+        their respective session id's, and the KIT flight feature (1-4)
+        """
+
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
         #     raise ValueError("Platform ID must be between 1 and 3")
         if not 1 <= kit_feature_type <= 4:
@@ -170,6 +216,9 @@ class HeatMap:
         probe_session_id,
         kit_feature_type,
     ):
+        """
+        Make a combined matrix of KIT and KHT features
+        """
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
         #     raise ValueError("Platform ID must be between 1 and 3")
 
@@ -224,5 +273,6 @@ class HeatMap:
         return matrix
 
     def plot_heatmap(self, matrix, title=None):
+        """Generate a heatmap from the provided feature matrix and optional title"""
         ax = sns.heatmap(matrix, linewidth=0.5).set_title(title)
         plt.savefig(title)
