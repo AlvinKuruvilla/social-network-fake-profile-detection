@@ -57,5 +57,5 @@ Determines if word level features should be used, along with KHT/KIT features.
 Specifies which gender data to include (we store a mapping in the code of what gender each ID was).
     - **all**: Include all ids.
     - **male**: Include all male ids.
-    - **other**: Include all other ids.
-![Workflow] (media/Workflow.png)
+    - **other**: Include all other ids. 
+![Workflow](media/Workflow.png)
