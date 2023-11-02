@@ -58,4 +58,5 @@ Specifies which gender data to include (we store a mapping in the code of what g
     - **all**: Include all ids.
     - **male**: Include all male ids.
     - **other**: Include all other ids. 
-![Workflow](media/Workflow.png)
+
+![Workflow](media/Worflow.jpg)
