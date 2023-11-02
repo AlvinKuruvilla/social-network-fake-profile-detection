@@ -131,6 +131,8 @@ class HeatMap:
         """
         Make a matrix of KHT features from the enrollment and probe id's and
         their respective session id's
+        Note if enroll_platform_id, probe_platform_id are None, then all ids are used.
+        But if one of them are None the other must also be none
         """
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
         #     raise ValueError("Platform ID must be between 1 and 3")
@@ -176,6 +178,9 @@ class HeatMap:
         """
         Make a matrix of KIT features from the enrollment and probe id's,
         their respective session id's, and the KIT flight feature (1-4)
+
+        Note if enroll_platform_id, probe_platform_id are None, then all ids are used.
+        But if one of them are None the other must also be none
         """
 
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
@@ -218,6 +223,9 @@ class HeatMap:
     ):
         """
         Make a combined matrix of KIT and KHT features
+
+        Note if enroll_platform_id, probe_platform_id are None, then all ids are used.
+        But if one of them are None the other must also be none
         """
         # if not 1 <= enroll_platform_id <= 3 or not 1 <= probe_platform_id <= 3:
         #     raise ValueError("Platform ID must be between 1 and 3")
