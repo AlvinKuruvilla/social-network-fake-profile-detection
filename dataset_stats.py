@@ -48,15 +48,21 @@ def keystrokes_per_user():
     rows = []
     df = read_compact_format()
     ids = sorted(list(df["user_ids"].unique()))
+    keystroke_count = []
     for _id in ids:
+        keystroke_count.append(force_round_up(mean_samples_for_user(_id)))
         # The decimal conversion here is to force round to the nearest integer
         rows.append([_id, force_round_up(mean_samples_for_user(_id))])
     table = tabulate(
         rows,
-        headers=["ID", "Mean Sample Count Across all Platforms"],
+        headers=["ID", "Mean Sample Count Across per User"],
         tablefmt="plain",
     )
     print(table)
+    print(
+        "Mean Keystrokes across all users: "
+        + str(sum(keystroke_count) / len(keystroke_count))
+    )
 
 
 def keystrokes_per_session():
@@ -76,4 +82,4 @@ def keystrokes_per_session():
 
 
 if __name__ == "__main__":
-    keystrokes_per_session()
+    keystrokes_per_user()
