@@ -4,6 +4,7 @@ import sys
 import enum
 import matplotlib.pyplot as plt
 import seaborn as sns
+from classifiers.dbod import IndividualDistanceBasedKeystrokeFeatureOutlierDetector
 from classifiers.template_generator import all_ids, read_compact_format
 from features.keystroke_features import (
     create_kht_data_from_df,
@@ -258,6 +259,12 @@ class HeatMap:
                 df = get_user_by_platform(j, probe_platform_id, probe_session_id)
                 kht_probe = create_kht_data_from_df(df)
                 kit_probe = create_kit_data_from_df(df, kit_feature_type)
+                # outlier_detector = (
+                #     IndividualDistanceBasedKeystrokeFeatureOutlierDetector(
+                #         set(kit_probe.keys()), kit_probe
+                #     )
+                # )
+                # kit_probe = outlier_detector.find_kht_or_kit_specific_inliers()
                 if self.config["use_word_holder"]:
                     word_list = sp.get_words(df)
                     word_hold_probe = word_hold(word_list, df)
