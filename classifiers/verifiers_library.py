@@ -1,6 +1,7 @@
 import os
 import statistics
 import json
+from classifiers.dbod import DistanceBasedKeystrokeFeatureOutlierDetector
 from classifiers.ecdf import ECDF
 
 
@@ -17,8 +18,6 @@ class Verify:
         # feature names could also mean pair of letters for KIT or diagraphs
         # feature names could also mean pair of sequence of three letters for trigraphs
         # feature names can be extended to any features that we can extract from keystrokes
-        self.pattern1 = p1
-        self.pattern2 = p2
         self.pattern1threshold = (
             p1_t  # sort of feature selection, based on the availability
         )
@@ -29,18 +28,26 @@ class Verify:
             config = json.load(f)
         self.common_features = []
         if config["use_feature_selection"]:
-            for feature in self.pattern1.keys():
-                if feature in self.pattern2.keys():
+            for feature in p1.keys():
+                if feature in p2.keys():
                     if (
-                        len(self.pattern1[feature]) >= self.pattern1threshold
-                        and len(self.pattern2[feature]) >= self.pattern2threshold
+                        len(p1[feature]) >= self.pattern1threshold
+                        and len(p2[feature]) >= self.pattern2threshold
                     ):
                         self.common_features.append(feature)
         else:
-            self.common_features = set(self.pattern1.keys()).intersection(
-                set(self.pattern2.keys())
-            )
+            self.common_features = set(p1.keys()).intersection(set(p2.keys()))
+        # outlier_detector = DistanceBasedKeystrokeFeatureOutlierDetector(
+        #     self.common_features, p1, p2
+        # )
+        # self.pattern1, self.pattern2 = outlier_detector.find_inliers()
+        self.pattern1 = p1
+        self.pattern2 = p2
+
         # print(f"comparing {len(self.common_features)} common_features")
+        # print(self.common_features)
+        # input("Common features:")
+        # Apply the distance-based outlier detection here, to the common features
 
     def get_abs_match_score(self):  # A verifier
         """
@@ -76,8 +83,14 @@ class Verify:
             # print(f"self.pattern1[feature]:{self.pattern1[feature]}")
             # print(f"self.pattern2[feature]:{self.pattern2[feature]}")
 
-            pattern1_median = statistics.median(self.pattern1[feature])
-            pattern2_median = statistics.median(self.pattern2[feature])
+            try:
+                pattern1_median = statistics.median(self.pattern1[feature])
+            except statistics.StatisticsError:
+                pattern1_median = 0
+            try:
+                pattern2_median = statistics.median(self.pattern2[feature])
+            except statistics.StatisticsError:
+                pattern2_median = 0
             if min(pattern1_median, pattern2_median) == 0:
                 return 0  # Must look into and fix this! just a temporary arrangment
                 # raise ValueError('min of means is zero, should not happen!')
@@ -181,12 +194,17 @@ class Verify:
             # raise ValueError("No common features to compare!")
         matches, total = 0, 0
         for feature in self.common_features:
-            enroll_mean = statistics.median(list(self.pattern1[feature]))
+            try:
+                enroll_mean = statistics.median(list(self.pattern1[feature]))
+            except statistics.StatisticsError:
+                enroll_mean = 0
             try:
                 template_stdev = statistics.stdev(self.pattern1[feature])
             except statistics.StatisticsError:
                 # print("In error: ", self.pattern1[feature])
-                if len(self.pattern1[feature]) == 1:
+                if len(self.pattern1[feature]) == 0:
+                    template_stdev = 0
+                elif len(self.pattern1[feature]) == 1:
                     template_stdev = self.pattern1[feature][0] / 4
                 else:
                     template_stdev = self.pattern1[feature] / 4
@@ -242,7 +260,10 @@ class Verify:
             return 0
         similarities = []
         for feature in self.common_features:
-            M_g_i = statistics.median(self.pattern1[feature])
+            try:
+                M_g_i = statistics.median(self.pattern1[feature])
+            except statistics.StatisticsError:
+                continue
             for x_i in self.pattern2[feature]:
                 if x_i <= M_g_i:
                     similarities.append(self.get_cdf_xi(self.pattern1[feature], x_i))
