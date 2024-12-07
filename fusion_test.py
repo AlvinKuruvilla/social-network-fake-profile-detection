@@ -69,17 +69,16 @@ def score_fusion_test(fusion_algorithm: FusionAlgorithm):
 
 def platform_fusion_cross_test():
     heatmap = HeatMap(VerifierType.SIMILARITY)
-    similarity_matrix = heatmap.combined_keystroke_matrix(1, 2, None, None, 1)
+    similarity_matrix = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
     heatmap = HeatMap(VerifierType.ABSOLUTE)
-    absolute_matrix = heatmap.combined_keystroke_matrix(1, 2, None, None, 1)
+    absolute_matrix = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
     heatmap = HeatMap(VerifierType.ITAD)
-    itad_matrix = heatmap.combined_keystroke_matrix(1, 2, None, None, 1)
+    itad_matrix = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
     sf = ScoreFuser(itad_matrix, similarity_matrix, absolute_matrix)
     for fusion_algorithm in FusionAlgorithm:
         res = sf.find_matrix(fusion_algorithm)
         ids = all_ids()
-        print(fusion_algorithm)
-        print("F vs. I")
+        print("T vs I with", fusion_algorithm)
         print_k_table(matrix=res, ids=ids)
 
 
@@ -130,4 +129,4 @@ def dual_platform_fusion_test():
 
 
 if __name__ == "__main__":
-    platform_even_split_fusion_cross_test()
+    platform_fusion_cross_test()
