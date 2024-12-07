@@ -1,3 +1,4 @@
+from multiprocessing import Pool
 import sys
 import os
 import json
@@ -84,43 +85,54 @@ def train_session_one_test_two():
 
 
 def train_on_one_test_another():
-    heatmap = HeatMap(VerifierType.SIMILARITY)
+    heatmap = HeatMap(VerifierType.ITAD)
 
-    # matrix = heatmap.combined_keystroke_matrix(1, 2, None, None, 1)
+    matrix = heatmap.combined_keystroke_matrix(1, 2, None, None, 1)
     matrix2 = heatmap.combined_keystroke_matrix(1, 3, None, None, 1)
-    # matrix3 = heatmap.combined_keystroke_matrix(2, 1, None, None, 1)
-    # matrix4 = heatmap.combined_keystroke_matrix(2, 3, None, None, 1)
-    # matrix5 = heatmap.combined_keystroke_matrix(3, 1, None, None, 1)
-    # matrix6 = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
+    matrix3 = heatmap.combined_keystroke_matrix(2, 1, None, None, 1)
+    matrix4 = heatmap.combined_keystroke_matrix(2, 3, None, None, 1)
+    matrix5 = heatmap.combined_keystroke_matrix(3, 1, None, None, 1)
+    matrix6 = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
     ids = all_ids()
     print()
-    # print("F vs. I")
-    # print_k_table(matrix=matrix, ids=ids)
-    # input()
+    print("F vs. I")
+    print_k_table(matrix=matrix, ids=ids)
     print("F vs. T")
     print_k_table(matrix=matrix2, ids=ids)
-    input()
-    # print("I vs. F")
-    # print_k_table(matrix=matrix3, ids=ids)
-    # input()
-    # print("I vs. T")
-    # print_k_table(matrix=matrix4, ids=ids)
-    # input()
-    # print("T vs. F")
-    # print_k_table(matrix=matrix5, ids=ids)
-    # input()
-    # print("T vs. I")
-    # print_k_table(matrix=matrix6, ids=ids)
+    print("I vs. F")
+    print_k_table(matrix=matrix3, ids=ids)
+    print("I vs. T")
+    print_k_table(matrix=matrix4, ids=ids)
+    print("T vs. F")
+    print_k_table(matrix=matrix5, ids=ids)
+    print("T vs. I")
+    print_k_table(matrix=matrix6, ids=ids)
+
+
+def compute_matrix(args):
+    heatmap, pair, third, none1, none2, last = args
+    return heatmap.combined_keystroke_matrix(pair, third, none1, none2, last)
 
 
 def cross_platform_2v1():
-    heatmap = HeatMap(VerifierType.SIMILARITY)
-    matrix = heatmap.combined_keystroke_matrix([1, 2], 3, None, None, 1)
-    matrix2 = heatmap.combined_keystroke_matrix([1, 3], 2, None, None, 1)
-    matrix3 = heatmap.combined_keystroke_matrix([2, 1], 3, None, None, 1)
-    matrix4 = heatmap.combined_keystroke_matrix([2, 3], 1, None, None, 1)
-    matrix5 = heatmap.combined_keystroke_matrix([3, 1], 2, None, None, 1)
-    matrix6 = heatmap.combined_keystroke_matrix([3, 2], 1, None, None, 1)
+    heatmap = HeatMap(VerifierType.ITAD)
+    # Define the arguments for each matrix computation
+    tasks = [
+        (heatmap, [1, 2], 3, None, None, 1),
+        (heatmap, [1, 3], 2, None, None, 1),
+        (heatmap, [2, 1], 3, None, None, 1),
+        (heatmap, [2, 3], 1, None, None, 1),
+        (heatmap, [3, 1], 2, None, None, 1),
+        (heatmap, [3, 2], 1, None, None, 1),
+    ]
+
+    # Parallel execution
+    with Pool(processes=6) as pool:  # Use the number of CPU cores you have
+        matrices = pool.map(compute_matrix, tasks)
+
+    # Unpack the results
+    matrix, matrix2, matrix3, matrix4, matrix5, matrix6 = matrices
+
     ids = all_ids()
     print()
     print("FI")
@@ -145,6 +157,6 @@ def cross_platform_2v1():
 if __name__ == "__main__":
     with open(os.path.join(os.getcwd(), "classifier_config.json"), "r") as f:
         config = json.load(f)
-    # print("Using feature selection is: ", config["use_feature_selection"])
-    # query_yes_no("Proceed?")
-    train_on_one_test_another()
+    print("Using feature selection is: ", config["use_feature_selection"])
+    query_yes_no("Proceed?")
+    cross_platform_2v1()
