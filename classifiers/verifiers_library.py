@@ -1,7 +1,33 @@
 import os
 import statistics
 import json
+from classifiers.dbod import DistanceBasedKeystrokeFeatureOutlierDetector
 from classifiers.ecdf import ECDF
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+
+def cosine_similarity_with_padding(s1, s2):
+    if len(s1) == 0 and len(s2) == 0:
+        return 1
+    s1 = np.array(s1)
+    s2 = np.array(s2)
+    # Determine the length of the longer sequence
+    max_len = max(len(s1), len(s2))
+
+    # Pad the shorter sequence with zeros (or you could use np.nan or the mean of the sequence)
+    if len(s1) < max_len:
+        s1 = np.pad(s1, (0, max_len - len(s1)), "constant")
+    if len(s2) < max_len:
+        s2 = np.pad(s2, (0, max_len - len(s2)), "constant")
+
+    # Reshape both sequences to be 2D arrays (required for sklearn cosine_similarity)
+    s1 = s1.reshape(1, -1)
+    s2 = s2.reshape(1, -1)
+
+    # Compute and return the cosine similarity
+    similarity = cosine_similarity(s1, s2)[0][0]
+    return similarity
 
 
 class Verify:
@@ -40,7 +66,21 @@ class Verify:
             self.common_features = set(self.pattern1.keys()).intersection(
                 set(self.pattern2.keys())
             )
+        if config["print_feature_distribution"]:
+            self.write_feature_pattern_distribution("FI_feat_pattern_dist.txt")
+        if config["use_outlier_detection"]:
+            outlier_detector = DistanceBasedKeystrokeFeatureOutlierDetector(
+                self.common_features, p1, p2
+            )
+            self.pattern1, self.pattern2 = outlier_detector.find_inliers()
+
         # print(f"comparing {len(self.common_features)} common_features")
+
+    def write_feature_pattern_distribution(self, filename: str):
+        with open(filename, "a+") as f:
+            for feat in self.common_features:
+                f.write("Length of Pattern 1: " + str(len(self.pattern1[feat])) + "\n")
+                f.write("Length of Pattern 2: " + str(len(self.pattern2[feat])) + "\n")
 
     def get_abs_match_score(self):  # A verifier
         """
@@ -75,9 +115,14 @@ class Verify:
             # print(f"feature:{feature}")
             # print(f"self.pattern1[feature]:{self.pattern1[feature]}")
             # print(f"self.pattern2[feature]:{self.pattern2[feature]}")
-
-            pattern1_median = statistics.median(self.pattern1[feature])
-            pattern2_median = statistics.median(self.pattern2[feature])
+            try:
+                pattern1_median = statistics.median(self.pattern1[feature])
+            except statistics.StatisticsError:
+                pattern1_median = 0
+            try:
+                pattern2_median = statistics.median(self.pattern2[feature])
+            except statistics.StatisticsError:
+                pattern2_median = 0
             if min(pattern1_median, pattern2_median) == 0:
                 return 0  # Must look into and fix this! just a temporary arrangment
                 # raise ValueError('min of means is zero, should not happen!')
@@ -121,13 +166,18 @@ class Verify:
             # raise ValueError("No common features to compare!")
         key_matches, total_features = 0, 0
         for feature in self.common_features:
-            pattern1_median = statistics.median(list(self.pattern1[feature]))
+            try:
+                pattern1_median = statistics.median(list(self.pattern1[feature]))
+            except statistics.StatisticsError:
+                pattern1_median = 0
             try:
                 pattern1_stdev = statistics.stdev(self.pattern1[feature])
             except statistics.StatisticsError:
-                # print("In error: ", self.pattern1[feature])
+                print("In error: ", self.pattern1[feature])
                 if len(self.pattern1[feature]) == 1:
                     pattern1_stdev = self.pattern1[feature][0] / 4
+                elif len(self.pattern1[feature]) == 0:
+                    pattern1_stdev = 0
                 else:
                     pattern1_stdev = (
                         self.pattern1[feature] / 4
@@ -140,7 +190,9 @@ class Verify:
                 ):
                     value_matches += 1
                 total_values += 1
-            if value_matches / total_values <= 0.5:
+            if total_values == 0:
+                continue
+            if value_matches / total_values > 0.5:
                 key_matches += 1
             total_features += 1
 
@@ -181,13 +233,19 @@ class Verify:
             # raise ValueError("No common features to compare!")
         matches, total = 0, 0
         for feature in self.common_features:
-            enroll_mean = statistics.median(list(self.pattern1[feature]))
+            try:
+                enroll_mean = statistics.median(list(self.pattern1[feature]))
+            except statistics.StatisticsError:
+                print("In bad median case")
+                enroll_mean = 0
             try:
                 template_stdev = statistics.stdev(self.pattern1[feature])
             except statistics.StatisticsError:
-                # print("In error: ", self.pattern1[feature])
+                # print("In error: ", self.pattern1[feature], len(self.pattern1[feature]))
                 if len(self.pattern1[feature]) == 1:
                     template_stdev = self.pattern1[feature][0] / 4
+                elif len(self.pattern1[feature]) == 0:
+                    template_stdev = 0
                 else:
                     template_stdev = self.pattern1[feature] / 4
 
@@ -242,7 +300,10 @@ class Verify:
             return 0
         similarities = []
         for feature in self.common_features:
-            M_g_i = statistics.median(self.pattern1[feature])
+            try:
+                M_g_i = statistics.median(self.pattern1[feature])
+            except statistics.StatisticsError:
+                continue
             for x_i in self.pattern2[feature]:
                 if x_i <= M_g_i:
                     similarities.append(self.get_cdf_xi(self.pattern1[feature], x_i))
@@ -291,3 +352,22 @@ class Verify:
                 number_of_instances_compared = number_of_instances_compared + 1
         # print('number_of_instances_compared', number_of_instances_compared)
         return grand_sum / number_of_instances_compared
+
+    def get_euclidean_knn_similarity(self):
+        if len(self.common_features) == 0:  # if there exist no common features,
+            return 0
+            # raise ValueError("No common features to compare!")
+        matches, total = 0, 0
+        for feature in self.common_features:
+            print("Probe:")
+            probe = self.pattern2[feature]
+            print(probe)
+            print("Enrollment:")
+            enroll = self.pattern1[feature]
+            print(enroll)
+            distance = cosine_similarity_with_padding(enroll, probe)
+            print(distance)
+            if distance >= 0.7:
+                matches += 1
+            total += 1
+        return matches / total

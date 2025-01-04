@@ -61,7 +61,7 @@ class Genders:
 
 def read_compact_format():
     df = pd.read_csv(
-        os.path.join(os.getcwd(), "dataset", "cleaned2.csv"),
+        os.path.join(os.getcwd(), "dataset", "cleansed_50.csv"),
         dtype={
             "key": str,
             "press_time": np.float64,
@@ -97,7 +97,8 @@ def all_ids():
         config = json.load(f)
     gender_type = str(config["gender"])
     if gender_type.lower() == Genders.ALL().lower():
-        return [num for num in range(1, 26) if num != 22]
+        df = read_compact_format()
+        return list(set(df["user_ids"].tolist()))
     elif gender_type.lower() == Genders.MALE().lower():
         return [9, 12, 14, 15, 16, 17, 18, 20, 21, 26, 27]
     elif gender_type.lower() == Genders.FEMALE().lower():

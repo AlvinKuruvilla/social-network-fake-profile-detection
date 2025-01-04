@@ -27,6 +27,7 @@ class VerifierType(enum.Enum):
     SIMILARITY_UNWEIGHTED = 3
     ABSOLUTE = 4
     ITAD = 5
+    COSINE = 6
 
 
 def get_user_by_platform(user_id, platform_id, session_id=None):
@@ -70,11 +71,37 @@ def get_user_by_platform(user_id, platform_id, session_id=None):
             # Should only contain an inclusive range of the starting id and ending id
             assert len(platform_id) == 2
             if platform_id[0] < platform_id[1]:
+                print("Session ID is:", session_id)
+                print("Dataframe is (look at the session id column):")
+                print(
+                    set(
+                        df[
+                            (df["user_ids"] == user_id)
+                            & (
+                                df["platform_id"].between(
+                                    platform_id[0], platform_id[1]
+                                )
+                            )
+                        ]["session_id"]
+                        .unique()
+                        .tolist()
+                    )
+                )
+                # input("Case 1")
+
                 return df[
                     (df["user_ids"] == user_id)
                     & (df["platform_id"].between(platform_id[0], platform_id[1]))
                 ]
             else:
+                print("Dataframe is (look at the session id column):")
+                print(
+                    df[
+                        (df["user_ids"] == user_id)
+                        & (df["platform_id"].between(platform_id[1], platform_id[0]))
+                    ]
+                )
+                # input("Case 2")
                 return df[
                     (df["user_ids"] == user_id)
                     & (df["platform_id"].between(platform_id[1], platform_id[0]))
@@ -103,7 +130,6 @@ def get_user_by_platform(user_id, platform_id, session_id=None):
                 & (df["platform_id"] == platform_id)
                 & (df["session_id"].isin(session_id))
             ]
-
     return df[
         (df["user_ids"] == user_id)
         & (df["platform_id"] == platform_id)
@@ -160,6 +186,8 @@ class HeatMap:
                     row.append(v.get_similarity_score())
                 elif self.verifier_type == VerifierType.ITAD:
                     row.append(v.itad_similarity())
+                elif self.verifier_type == VerifierType.COSINE:
+                    row.append(v.get_euclidean_knn_similarity())
                 else:
                     raise ValueError(
                         "Unknown VerifierType {}".format(self.verifier_type)
@@ -206,6 +234,8 @@ class HeatMap:
                     row.append(v.get_similarity_score())
                 elif self.verifier_type == VerifierType.ITAD:
                     row.append(v.itad_similarity())
+                elif self.verifier_type == VerifierType.COSINE:
+                    row.append(v.get_euclidean_knn_similarity())
                 else:
                     raise ValueError(
                         "Unknown VerifierType {}".format(self.verifier_type)
@@ -237,11 +267,9 @@ class HeatMap:
         for i in track(ids):
             df = get_user_by_platform(i, enroll_platform_id, enroll_session_id)
             print(
-                f"enroll_platform_id: {enroll_platform_id}, enroll_session_id: {enroll_session_id}, df.shape: {df.shape}"
+                f"enroll_platform_id: {enroll_platform_id}, enroll_session_id: {enroll_session_id}, current enrollment user id: {i}, df.shape: {df.shape}"
             )
-            print(
-                f"probe_platform_id: {probe_platform_id}, probe_session_id: {probe_session_id}, df.shape: {df.shape}"
-            )
+
             kht_enrollment = create_kht_data_from_df(df)
             kit_enrollment = create_kit_data_from_df(df, kit_feature_type)
             if self.config["use_word_holder"]:
@@ -252,10 +280,22 @@ class HeatMap:
                     kht_enrollment | kit_enrollment | word_hold_enrollment
                 )
             else:
-                combined_enrollment = kht_enrollment | kit_enrollment
+                # kit_enrollment_2 = create_kit_data_from_df(df, 2)
+                # kit_enrollment_3 = create_kit_data_from_df(df, 3)
+                # kit_enrollment_4 = create_kit_data_from_df(df, 4)
+
+                combined_enrollment = (
+                    kht_enrollment | kit_enrollment
+                    # | kit_enrollment_2
+                    # | kit_enrollment_3
+                    # | kit_enrollment_4
+                )
             row = []
             for j in ids:
                 df = get_user_by_platform(j, probe_platform_id, probe_session_id)
+                print(
+                    f"probe_platform_id: {probe_platform_id}, probe_session_id: {probe_session_id}, current probe user id: {j}, df.shape: {df.shape}"
+                )
                 kht_probe = create_kht_data_from_df(df)
                 kit_probe = create_kit_data_from_df(df, kit_feature_type)
                 if self.config["use_word_holder"]:
@@ -273,6 +313,8 @@ class HeatMap:
                     row.append(v.get_similarity_score())
                 elif self.verifier_type == VerifierType.ITAD:
                     row.append(v.itad_similarity())
+                elif self.verifier_type == VerifierType.COSINE:
+                    row.append(v.get_euclidean_knn_similarity())
                 else:
                     raise ValueError(
                         "Unknown VerifierType {}".format(self.verifier_type)
