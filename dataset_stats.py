@@ -81,5 +81,11 @@ def keystrokes_per_session():
     print(table)
 
 
+def user_platform_count():
+    df = read_compact_format()
+    mapping = df.groupby("user_ids")["platform_id"].apply(set).to_dict()
+    print(mapping)
+
+
 if __name__ == "__main__":
-    keystrokes_per_user()
+    user_platform_count()

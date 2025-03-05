@@ -23,7 +23,7 @@ def decision_fusion_test():
         probe = random.choice(ids)
         df = get_user_by_platform(enrollment, 1, None)
         sp = SentenceParser(os.path.join(os.getcwd(), "cleaned2.csv"))
-        word_list = sp.get_words(df)
+        word_list = sp.get_words(list(df["key"]))
         word_hold_enrollment = word_hold(word_list, df)
         kht_enrollment = create_kht_data_from_df(df)
         kit_enrollment = create_kit_data_from_df(df, 1)
@@ -32,7 +32,7 @@ def decision_fusion_test():
         df = get_user_by_platform(probe, 1, None)
         kht_probe = create_kht_data_from_df(df)
         kit_probe = create_kit_data_from_df(df, 1)
-        word_list = sp.get_words(df)
+        word_list = sp.get_words(list(df["key"]))
         word_hold_probe = word_hold(word_list, df)
         combined_probe = kht_probe | kit_probe | word_hold_probe
         v = vl.Verify(combined_enrollment, combined_probe)

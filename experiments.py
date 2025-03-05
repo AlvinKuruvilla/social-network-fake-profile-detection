@@ -93,7 +93,7 @@ def train_on_one_test_another():
     # matrix5 = heatmap.combined_keystroke_matrix(3, 1, None, None, 1)
     # matrix6 = heatmap.combined_keystroke_matrix(3, 2, None, None, 1)
     ids = all_ids()
-    print()
+    # print()
     # print("F vs. I")
     # print_k_table(matrix=matrix, ids=ids)
     # input()
@@ -145,6 +145,6 @@ def cross_platform_2v1():
 if __name__ == "__main__":
     with open(os.path.join(os.getcwd(), "classifier_config.json"), "r") as f:
         config = json.load(f)
-    # print("Using feature selection is: ", config["use_feature_selection"])
-    # query_yes_no("Proceed?")
-    train_on_one_test_another()
+    print("Using feature selection is: ", config["use_feature_selection"])
+    query_yes_no("Proceed?")
+    cross_platform_2v1()
