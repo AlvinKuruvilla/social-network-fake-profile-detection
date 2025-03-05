@@ -1,5 +1,9 @@
 {
     "use_feature_selection": false,
     "use_word_holder": false,
-    "gender": "all"
+    "gender": "all",
+    "dbod_r": 100000000,
+    "dbod_beta": 0.68,
+    "print_feature_distribution": false,
+    "use_outlier_detection": true
 }
