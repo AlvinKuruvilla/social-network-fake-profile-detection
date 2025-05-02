@@ -5,14 +5,15 @@ import enum
 import matplotlib.pyplot as plt
 import seaborn as sns
 from classifiers.template_generator import all_ids, read_compact_format
-from features.keystroke_features import (
+from features.lori_keystroke_features import (
     create_kht_data_from_df,
     create_kit_data_from_df,
-    word_hold,
+    # word_hold,
 )
 from rich.progress import track
 import classifiers.verifiers_library as vl
-from features.word_parser import SentenceParser
+
+# from features.word_parser import SentenceParser
 
 path = os.path.dirname(os.getcwd())
 print(path)
@@ -71,27 +72,29 @@ def get_user_by_platform(user_id, platform_id, session_id=None):
             assert len(platform_id) == 2
             if platform_id[0] < platform_id[1]:
                 return df[
-                    (df["user_ids"] == user_id)
+                    (df["user_id"] == user_id)
                     & (df["platform_id"].between(platform_id[0], platform_id[1]))
                 ]
             else:
                 return df[
-                    (df["user_ids"] == user_id)
+                    (df["user_id"] == user_id)
                     & (df["platform_id"].between(platform_id[1], platform_id[0]))
                 ]
-
-        return df[(df["user_ids"] == user_id) & (df["platform_id"] == platform_id)]
+        else:
+            # print(df[df["user_id"] == user_id])
+            # input()
+            return df[(df["user_id"] == user_id) & (df["platform_id"] == platform_id)]
     if isinstance(session_id, list):
         # Should only contain an inclusive range of the starting id and ending id
         if len(session_id) == 2:
             return df[
-                (df["user_ids"] == user_id)
+                (df["user_id"] == user_id)
                 & (df["platform_id"] == platform_id)
                 & (df["session_id"].between(session_id[0], session_id[1]))
             ]
         elif len(session_id) > 2:
             test = df[
-                (df["user_ids"] == user_id)
+                (df["user_id"] == user_id)
                 & (df["platform_id"] == platform_id)
                 & (df["session_id"].isin(session_id))
             ]
@@ -99,13 +102,13 @@ def get_user_by_platform(user_id, platform_id, session_id=None):
             # print(test["session_id"].unique())
             # input()
             return df[
-                (df["user_ids"] == user_id)
+                (df["user_id"] == user_id)
                 & (df["platform_id"] == platform_id)
                 & (df["session_id"].isin(session_id))
             ]
 
     return df[
-        (df["user_ids"] == user_id)
+        (df["user_id"] == user_id)
         & (df["platform_id"] == platform_id)
         & (df["session_id"] == session_id)
     ]
@@ -144,10 +147,10 @@ class HeatMap:
         for i in track(ids):
             print(i)
             df = get_user_by_platform(i, enroll_platform_id, enroll_session_id)
+            # print(df)
+            # input()
             enrollment = create_kht_data_from_df(df)
             row = []
-            # TODO: We have to do a better job of figuring out how many users there
-            # are automatically so we don't need to keep changing it manually
             for j in ids:
                 df = get_user_by_platform(j, probe_platform_id, probe_session_id)
                 probe = create_kht_data_from_df(df)
@@ -192,6 +195,8 @@ class HeatMap:
         ids = all_ids()
         for i in track(ids):
             df = get_user_by_platform(i, enroll_platform_id, enroll_session_id)
+            # print(df)
+            # input("Filtered data")
             enrollment = create_kit_data_from_df(df, kit_feature_type)
             row = []
             for j in ids:
@@ -236,6 +241,8 @@ class HeatMap:
         ids = all_ids()
         for i in track(ids):
             df = get_user_by_platform(i, enroll_platform_id, enroll_session_id)
+            # print(df)
+            # input()
             print(
                 f"enroll_platform_id: {enroll_platform_id}, enroll_session_id: {enroll_session_id}, df.shape: {df.shape}"
             )
@@ -245,6 +252,7 @@ class HeatMap:
             kht_enrollment = create_kht_data_from_df(df)
             kit_enrollment = create_kit_data_from_df(df, kit_feature_type)
             if self.config["use_word_holder"]:
+                raise ValueError("Should not be testing with word hold")
                 sp = SentenceParser(os.path.join(os.getcwd(), "cleaned2.csv"))
                 word_list = sp.get_words(df)
                 word_hold_enrollment = word_hold(word_list, df)
@@ -259,6 +267,7 @@ class HeatMap:
                 kht_probe = create_kht_data_from_df(df)
                 kit_probe = create_kit_data_from_df(df, kit_feature_type)
                 if self.config["use_word_holder"]:
+                    raise ValueError("Should not be testing with word hold")
                     word_list = sp.get_words(df)
                     word_hold_probe = word_hold(word_list, df)
                     combined_probe = kht_probe | kit_probe | word_hold_probe

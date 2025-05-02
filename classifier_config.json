@@ -1,5 +1,7 @@
 {
-    "use_feature_selection": false,
-    "use_word_holder": false,
-    "gender": "all"
+  "use_feature_selection": false,
+  "use_word_holder": false,
+  "gender": "all",
+  "draw_feature_importance_graph": true,
+  "use_kht_in_table": true
 }

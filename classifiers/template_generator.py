@@ -61,14 +61,24 @@ class Genders:
 
 def read_compact_format():
     df = pd.read_csv(
-        os.path.join(os.getcwd(), "dataset", "cleaned2.csv"),
+        os.path.join(os.getcwd(), "dataset", "typenet_features.csv"),
         dtype={
-            "key": str,
-            "press_time": np.float64,
-            "release_time": np.float64,
+            "user_id": np.uint8,
             "platform_id": np.uint8,
+            "video_id": np.uint8,
             "session_id": np.uint8,
-            "user_ids": np.uint8,
+            "sequence_id": np.uint8,
+            "key1": str,
+            "key2": str,
+            "key1_press": np.float64,
+            "key1_release": np.float64,
+            "key2_press": np.float64,
+            "key2_release": np.float64,
+            "HL": np.float64,
+            "IL": np.float64,
+            "PL": np.float64,
+            "RL": np.float64,
+            "key1_timestamp": np.float64,
         },
     )
     # print(df.head())
@@ -97,12 +107,18 @@ def all_ids():
         config = json.load(f)
     gender_type = str(config["gender"])
     if gender_type.lower() == Genders.ALL().lower():
+        df = read_compact_format()
+        ids = list(set(df["user_id"].tolist()))
+        return ids
         return [num for num in range(1, 26) if num != 22]
     elif gender_type.lower() == Genders.MALE().lower():
+        raise ValueError("Should not be testing with other genders")
         return [9, 12, 14, 15, 16, 17, 18, 20, 21, 26, 27]
     elif gender_type.lower() == Genders.FEMALE().lower():
+        raise ValueError("Should not be testing with other genders")
         return [1, 3, 4, 5, 6, 8, 10, 11, 13, 19, 22, 23, 24]
     elif gender_type.lower() == Genders.OTHER().lower():
+        raise ValueError("Should not be testing with other genders")
         return [2, 7, 25]
     else:
         raise ValueError(f"Unknown gender type {gender_type}")

@@ -1,8 +1,12 @@
 pandas
-spacy
+# spacy
 numpy
 scikit-learn
 rich
 seaborn
 matplotlib
 tabulate
+tqdm
+xgboost
+bob.measure
+catboost
