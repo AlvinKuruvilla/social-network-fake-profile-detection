@@ -34,11 +34,11 @@ def deserialize_column(df, column_name):
 def flatten_column(df, column_name):
     new_cols = pd.DataFrame(df[column_name].tolist(), index=df.index)
     new_cols.columns = [
-        f"{column_name}_min",
-        f"{column_name}_max",
-        f"{column_name}_mean",
         f"{column_name}_median",
-        f"{column_name}_mode",
+        f"{column_name}_mean",
+        f"{column_name}_stdev",
+        f"{column_name}_q1",
+        f"{column_name}_q3",
     ]
 
     df = pd.concat([df.drop(columns=[column_name]), new_cols], axis=1)
@@ -114,6 +114,6 @@ for train_platforms, test_platform, experiment_name in experiments:
         y_test.value_counts().plot(kind="bar", title=f"Test {experiment_name}")
         plt.show()
 
-    run_xgboost_model(X_train, X_test, y_train, y_test)
+    run_random_forest_model(X_train, X_test, y_train, y_test)
 
     # input(f"{experiment_name} results")
