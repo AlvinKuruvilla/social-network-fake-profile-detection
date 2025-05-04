@@ -115,7 +115,7 @@ def most_common_kepairs(n=10):
     return [key for key, _ in sorted_items[:n]]
 
 
-def alpha_word_bigrams(m=15):
+def alpha_word_bigrams(m=50):
     count = 0
     bigrams = []
     words = read_word_list()
@@ -225,11 +225,40 @@ def fill_empty_row_values(df: pd.DataFrame, ckps):
             df[col] = df[col].apply(lambda x: [replacement_value] if x == [] else x)
     if config["use_kht_in_table"]:
         for col in df.columns:
-            # Replace cells that are empty lists or not evaluable with [0, 0, 0, 0, 0]
-            df[col] = df[col].apply(
-                lambda x: [0, 0, 0, 0, 0] if isinstance(x, list) and not x or not is_evaluable(str(x)) else x
-            )
+            flat_data = flatten_list(list(df[col]))
+            print(flat_data)
+            # input("Flat data is")
 
+            # Skip this column if flat_data contains NaN
+            # TODO: I would rather us count the non-nan values and if there is at least 1 (that is a heuristic we can change)
+            #       we just drop the nan's and keep the rest intact
+            # TODO: looks like we also sometimes get flattened lists with integer values, that's not right - should debug
+            #       We should do some typechecking to see if all flat_data is a list
+            if any(pd.isna(val) for val in flat_data):
+                print(
+                    f"Skipping column {col} because it contains NaN values in flat_data."
+                )
+                continue
+
+            # Compute the mean of the flattened data
+            data = statistics.mean(flat_data)
+            print(data)
+
+            # Calculate differences
+            for element in flat_data:
+                diffs.append(element - data)
+
+            # Generate a random replacement value
+            replacement_value = random.uniform(min(diffs), max(diffs))
+
+            # Modify the DataFrame column based on the logic
+            df[col] = df[col].apply(
+                lambda x: [replacement_value]
+                if isinstance(x, list) and not x or not is_evaluable(str(x))
+                else x
+            )
+    # Remove columns where flat_data contained NaN
+    df = df.dropna(axis=1, how="any")
     return df
 
 
@@ -262,13 +291,13 @@ def compute_fixed_feature_values(lst):
     arr = np.array(lst)
     # Return the statistics as a list
     return [
-        np.min(arr),
-        np.max(arr),
+        # np.min(arr),
+        # np.max(arr),
         np.median(arr),
         np.mean(arr),
         np.std(arr),
-        # np.quantile(arr, 0.25),  # 1st quartile
-        # np.quantile(arr, 0.75),  # 3rd quartile
+        np.quantile(arr, 0.25),  # 1st quartile
+        np.quantile(arr, 0.75),  # 3rd quartile
         # np.quantile(arr, 0.75) - np.quantile(arr, 0.25),  # IQR
         # stats.skew(arr),  # Skew
         # stats.kurtosis(arr),  # Kurtosis
@@ -382,7 +411,6 @@ def create_full_user_and_platform_table(source: CKP_SOURCE):
                 continue
             print(f"User: {i}, platform: {map_platform_id_to_initial(j)}")
             table = KeystrokeFeatureTable()
-            # TODO: Add kht to this as well
             table.find_kit_from_most_common_keypairs(df, source)
             if config["use_kht_in_table"]:
                 table.find_kht_for_df(df)
