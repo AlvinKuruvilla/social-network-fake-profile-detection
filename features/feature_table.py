@@ -234,29 +234,33 @@ def fill_empty_row_values(df: pd.DataFrame, ckps):
             #       we just drop the nan's and keep the rest intact
             # TODO: looks like we also sometimes get flattened lists with integer values, that's not right - should debug
             #       We should do some typechecking to see if all flat_data is a list
-            if any(pd.isna(val) for val in flat_data):
+            if any(not pd.isna(val) for val in flat_data):
+                cleaned_data = [x for x in flat_data if not np.isnan(x)]
+                data = statistics.mean(cleaned_data)
+                print(data)
+
+                # Calculate differences
+                for element in cleaned_data:
+                    diffs.append(element - data)
+
+                # Generate a random replacement value
+                replacement_value = random.uniform(min(diffs), max(diffs))
+
+                # Modify the DataFrame column by replacing it with the calculated value
+                # TODO: Instead of replacing all of the values, maybe we keep any existing values
+                #       because they are used in the calculation anyway and then only add replacements
+                #       till the list length is 5
+                df[col] = df[col].apply(
+                    lambda x: [replacement_value] * 5
+                    if isinstance(x, list) and not x or not is_evaluable(str(x))
+                    else x
+                )
+            else:
                 print(
                     f"Skipping column {col} because it contains NaN values in flat_data."
                 )
                 continue
 
-            # Compute the mean of the flattened data
-            data = statistics.mean(flat_data)
-            print(data)
-
-            # Calculate differences
-            for element in flat_data:
-                diffs.append(element - data)
-
-            # Generate a random replacement value
-            replacement_value = random.uniform(min(diffs), max(diffs))
-
-            # Modify the DataFrame column based on the logic
-            df[col] = df[col].apply(
-                lambda x: [replacement_value]
-                if isinstance(x, list) and not x or not is_evaluable(str(x))
-                else x
-            )
     # Remove columns where flat_data contained NaN
     df = df.dropna(axis=1, how="any")
     return df
