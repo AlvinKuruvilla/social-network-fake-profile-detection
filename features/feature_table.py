@@ -35,6 +35,38 @@ def clean_string(s):
     return cleaned.strip()
 
 
+def columns_to_remove():
+    return list(
+        set(
+            [
+                "user_id",
+                "platform_id",
+                "Unnamed: 0",
+                "against",
+                "methods",
+                "could",
+                "did",
+                "remain",
+                "realized",
+                "teacher",
+                "one-off",
+                "realizes",
+                "with ",  # NOTE: the space is intentional
+                "can",
+                "one-line",
+                "slap",
+                "sport",
+                "and",
+                "Rock",
+                "that",
+                "saying",
+                "insensitive",
+                "storyline",
+            ]
+        )
+    )
+
+
 def map_platform_id_to_initial(platform_id: int):
     platform_mapping = {1: "f", 2: "i", 3: "t"}
 

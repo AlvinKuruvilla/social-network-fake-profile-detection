@@ -5,6 +5,7 @@ import json
 from classifiers.ml_models import run_random_forest_model, run_xgboost_model
 from features.feature_table import (
     CKP_SOURCE,
+    columns_to_remove,
     create_full_user_and_platform_table,
     table_to_cleaned_df,
 )
@@ -45,13 +46,15 @@ def flatten_column(df, column_name):
     return df
 
 
-df = pd.read_csv(os.path.join(os.getcwd(), "alpha_features_data.csv"))
+df = pd.read_csv(os.path.join(os.getcwd(), "kht_and_kit_features_data.csv"))
 df = df.dropna()
 with open(os.path.join(os.getcwd(), "classifier_config.json"), "r") as f:
     config = json.load(f)
 # print(df.columns)
 # input("Printing dataframe columns")
 # Columns to deserialize
+# NOTE: deserialization here is different than dropping the unnecessary columns before they are passed to the model.
+#       Here deserialization is to make sure the feature lists get reinterpreted from str to python lists
 columns_to_deserialize = list(df.columns)
 columns_to_deserialize.remove("user_id")
 columns_to_deserialize.remove("platform_id")
@@ -93,12 +96,12 @@ for train_platforms, test_platform, experiment_name in experiments:
     print(experiment_name)
 
     X_train = df[df["platform_id"].isin(list(train_platforms))].drop(
-        columns=["user_id", "platform_id", "Unnamed: 0"]
+        columns=columns_to_remove(), errors="ignore"
     )
     y_train = df[df["platform_id"].isin(list(train_platforms))]["user_id"]
 
     X_test = df[df["platform_id"] == test_platform].drop(
-        columns=["user_id", "platform_id", "Unnamed: 0"]
+        columns=columns_to_remove(), errors="ignore"
     )
     y_test = df[df["platform_id"] == test_platform]["user_id"]
 
@@ -116,4 +119,4 @@ for train_platforms, test_platform, experiment_name in experiments:
 
     run_random_forest_model(X_train, X_test, y_train, y_test)
 
-    # input(f"{experiment_name} results")
+    input(f"{experiment_name} results")
