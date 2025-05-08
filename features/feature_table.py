@@ -39,9 +39,8 @@ def columns_to_remove():
     return list(
         set(
             [
-                "user_id",
-                "platform_id",
                 "Unnamed: 0",
+                "Unnamed: 126",
                 "against",
                 "methods",
                 "could",
@@ -62,6 +61,11 @@ def columns_to_remove():
                 "saying",
                 "insensitive",
                 "storyline",
+                "behavior",
+                "was",
+                "does",
+                "assault",
+                ". He", # NOTE: the space is intentional
             ]
         )
     )

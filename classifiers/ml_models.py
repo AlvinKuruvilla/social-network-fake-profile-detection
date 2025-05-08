@@ -174,9 +174,11 @@ def run_random_forest_model(X_train, X_test, y_train, y_test, max_k=5):
     label_encoder = LabelEncoder()
     y_train_encoded = label_encoder.fit_transform(y_train)
     y_test_encoded = label_encoder.transform(y_test)
-    min_samples_per_class = y_train.value_counts().min()
-    print(f"Minimum samples per class in training set: {min_samples_per_class}")
-    if min_samples_per_class < 2:
+    train_min_samples_per_class = y_train.value_counts().min()
+    test_min_samples_per_class = y_test.value_counts().min()
+    print(f"Minimum samples per class in training set: {train_min_samples_per_class}")
+    print(f"Minimum samples per class in test set: {test_min_samples_per_class}")
+    if train_min_samples_per_class < 2:
         print("⚠️ Not enough samples for StratifiedKFold → fitting without CV.")
         best_rf = RandomForestClassifier(random_state=42).fit(
             X_train_scaled, y_train_encoded
