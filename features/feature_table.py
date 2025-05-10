@@ -65,7 +65,10 @@ def columns_to_remove():
                 "was",
                 "does",
                 "assault",
-                ". He", # NOTE: the space is intentional
+                ". He",  # NOTE: the space is intentional
+                'wouldve"',
+                'its"',
+                ". It",
             ]
         )
     )
