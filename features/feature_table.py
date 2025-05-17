@@ -184,6 +184,9 @@ class KeystrokeFeatureTable:
     # NOTE: We should not use the most common keypairs for the deft features because they rely on the distances between keys rather
     # than timing differences so all users may show up the same but I have to check
     def find_kit_from_most_common_keypairs(self, df, ckp_source: CKP_SOURCE):
+        # result_set = set(df['key1'].astype(str) + df['key2'].astype(str))
+        # print(result_set)
+        # input("Unique keypairs in df")
         common_keypairs = get_ckps(ckp_source)
         for ckp in common_keypairs:
             for i in range(1, 5):
@@ -192,11 +195,24 @@ class KeystrokeFeatureTable:
                 #     in list(create_kit_data_from_df(df, i, use_seperator=False).keys())
                 # )
                 # print(ckp)
-                # print(list(create_kit_data_from_df(df, i, use_seperator=False).keys()))
+                # print(create_kit_data_from_df(df, i)[clean_string(ckp)])
                 # input()
-                self.inner[ckp] = list(
-                    create_kit_data_from_df(df, i)[clean_string(ckp)]
-                )
+                kit_data = create_kit_data_from_df(df, i)[clean_string(ckp)]
+                if len(kit_data) == 0:
+                    print(f"DBG: KIT keypair is empty for {ckp}")
+                    pass
+                elif len(kit_data) >= 1:
+                    # print("DBG: KIT keypair has more than 1 value, investigate further")
+                    # print(ckp)
+                    for entry in kit_data:
+                        self.inner[ckp].append(entry)
+                    # print(self.inner)
+                    # input("Current state of dictionary")
+                else:
+                    print("DBG: KIT keypair weird state, investigate further")
+                    print(ckp)
+                    print(kit_data)
+                    raise NotImplementedError("Weird state")
 
     def find_kht_for_df(self, df):
         kht_data = create_kht_data_from_df(df)
@@ -256,12 +272,24 @@ def fill_empty_row_values(df: pd.DataFrame, ckps):
     for col in cols:
         if col in ckps:
             flat_data = flatten_list(list(df[col]))
-            data = statistics.mean(flatten_list(list(df[col])))
+            # TODO: Before calculating the mean remove all na values
+            data = statistics.mean([x for x in flat_data if not pd.isna(x)])
             # print(data)
             for element in flat_data:
                 diffs.append(element - data)
             replacement_value = random.uniform(min(diffs), max(diffs))
-            df[col] = df[col].apply(lambda x: [replacement_value] if x == [] else x)
+            df[col] = df[col].apply(
+                lambda x: replacement_value
+                if isinstance(x, float) and pd.isna(x)
+                else [replacement_value if pd.isna(i) else i for i in x]
+                if isinstance(x, list)
+                else x
+            )
+        else:
+            if col == "user_id" or col == "platform_id":
+                pass
+            else:
+                raise ValueError(f"col: {col} is not in ckps")
     if config["use_kht_in_table"]:
         for col in df.columns:
             flat_data = flatten_list(list(df[col]))
@@ -306,6 +334,27 @@ def fill_empty_row_values(df: pd.DataFrame, ckps):
 
 
 def compute_fixed_feature_values(lst):
+    if isinstance(lst, float):
+        return [
+            lst,
+            lst,
+            lst,
+            lst,
+            lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+            # lst,
+        ]
+
     if len(lst) < 2:
         # This is just a way to make all of the KIT feature columns have the same length at the end
         # we can revert this back to just return the single element if we want to
@@ -376,16 +425,23 @@ def drop_empty_list_columns(df):
 
 def table_to_cleaned_df(table, source: CKP_SOURCE):
     combined_df = pd.concat(table, axis=0)
-    print(combined_df.columns)
+    print(combined_df)
     empty_list_count = combined_df.stack().map(is_empty_list).sum()
     nan_count = combined_df.isna().sum().sum()
     print(f"Number of cells containing empty lists: {empty_list_count}")
     print(f"Number of cells containing nans: {nan_count}")
+    print(len(combined_df.columns))
+    print(combined_df.columns)
+    combined_df.to_csv("before_cleaning.csv")
     full_df = fill_empty_row_values(combined_df, get_ckps(source))
     empty_list_count = full_df.stack().map(is_empty_list).sum()
     nan_count = full_df.isna().sum().sum()
     print(f"Number of cells containing empty lists (post fill): {empty_list_count}")
     print(f"Number of cells containing nans (post fill): {nan_count}")
+    print(len(full_df.columns))
+    print(full_df.columns)
+    full_df.to_csv("post_fill.csv")
+    input()
     fixed_df = flatten_kit_feature_columns(full_df, get_ckps(source))
     cleaned = drop_empty_list_columns(fixed_df)
     return cleaned
@@ -446,7 +502,8 @@ def create_custom_user_platform_and_sessions_table(
 
 def create_full_user_and_platform_table(source: CKP_SOURCE):
     rows = []
-    for i in tqdm(all_ids_with_full_platforms()):
+    # NOTE: for testing with non-complete partial datasets like small.csv use all_ids() function here instead
+    for i in tqdm(all_ids()):
         for j in range(1, 4):
             df = get_user_by_platform(i, j)
             if df.empty:
@@ -454,7 +511,11 @@ def create_full_user_and_platform_table(source: CKP_SOURCE):
                 continue
             print(f"User: {i}, platform: {map_platform_id_to_initial(j)}")
             table = KeystrokeFeatureTable()
+            # print(df.head())
             table.find_kit_from_most_common_keypairs(df, source)
+            # print(list(table.inner.keys()))
+            print(len(list(table.inner.keys())))
+            # input()
             if config["use_kht_in_table"]:
                 table.find_kht_for_df(df)
             # TODO: do we still need to do this?
@@ -462,6 +523,8 @@ def create_full_user_and_platform_table(source: CKP_SOURCE):
             table.add_user_platform_session_identifiers(i, j, None)
 
             row = table.as_df()
+            print(row)
+            input("Row to append")
             rows.append(row)
     return rows
 

@@ -61,9 +61,10 @@ class Genders:
 
 def read_compact_format():
     df = pd.read_csv(
+        # TODO: replaced with small.csv for testing, actual file is typenet_features.csv
         os.path.join(os.getcwd(), "dataset", "typenet_features.csv"),
         dtype={
-            "user_id": np.uint8,
+            "user_id": np.uint16,
             "platform_id": np.uint8,
             "video_id": np.uint8,
             "session_id": np.uint8,
@@ -81,7 +82,6 @@ def read_compact_format():
             "key1_timestamp": np.float64,
         },
     )
-    # print(df.head())
     return df
 
 
@@ -110,7 +110,6 @@ def all_ids():
         df = read_compact_format()
         ids = list(set(df["user_id"].tolist()))
         return ids
-        return [num for num in range(1, 26) if num != 22]
     elif gender_type.lower() == Genders.MALE().lower():
         raise ValueError("Should not be testing with other genders")
         return [9, 12, 14, 15, 16, 17, 18, 20, 21, 26, 27]

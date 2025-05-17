@@ -1,6 +1,6 @@
 import os
 import json
-
+import enum
 import pandas as pd
 import numpy as np
 
@@ -25,6 +25,12 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier, plot_importance
 import matplotlib.pyplot as plt
 import bob.measure
+class ScalarType(enum.Enum):
+    """Enum class representing the different types of verifiers available."""
+
+    STANDARD = 1
+    MIN_MAX = 2
+    EXTENDED_MIN_MAX = 3
 
 with open(os.path.join(os.getcwd(), "classifier_config.json"), "r") as f:
     config = json.load(f)
@@ -66,9 +72,14 @@ def analyze_top_k_distribution(y_test_encoded, y_pred_proba_xgb, label_encoder):
     return analysis_df
 
 
-def run_xgboost_model(X_train, X_test, y_train, y_test, max_k=5):
+def run_xgboost_model(X_train, X_test, y_train, y_test, scalar_obj: ScalarType, max_k=5):
     # Scale the features
-    scaler = MinMaxScaler()
+    if scalar_obj == ScalarType.MIN_MAX:
+        scaler = MinMaxScaler()
+    elif scalar_obj == ScalarType.STANDARD:
+        scaler = StandardScaler()
+    elif scalar_obj == ScalarType.EXTENDED_MIN_MAX:
+        scaler = ExtendedMinMaxScalar()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
@@ -164,9 +175,14 @@ def run_xgboost_model(X_train, X_test, y_train, y_test, max_k=5):
         plt.savefig("XGBoost Feature Importance.png")
 
 
-def run_random_forest_model(X_train, X_test, y_train, y_test, max_k=5):
+def run_random_forest_model(X_train, X_test, y_train, y_test, scalar_obj: ScalarType, max_k=5):
     # Scale the features
-    scaler = MinMaxScaler()
+    if scalar_obj == ScalarType.MIN_MAX:
+        scaler = MinMaxScaler()
+    elif scalar_obj == ScalarType.STANDARD:
+        scaler = StandardScaler()
+    elif scalar_obj == ScalarType.EXTENDED_MIN_MAX:
+        scaler = ExtendedMinMaxScalar()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
@@ -272,9 +288,14 @@ def run_random_forest_model(X_train, X_test, y_train, y_test, max_k=5):
         plt.savefig("Random Forest Feature Importance.png")
 
 
-def run_catboost_model(X_train, X_test, y_train, y_test, max_k=5):
+def run_catboost_model(X_train, X_test, y_train, y_test, scalar_obj: ScalarType, max_k=5):
     # Scale the features
-    scaler = StandardScaler()
+    if scalar_obj == ScalarType.MIN_MAX:
+        scaler = MinMaxScaler()
+    elif scalar_obj == ScalarType.STANDARD:
+        scaler = StandardScaler()
+    elif scalar_obj == ScalarType.EXTENDED_MIN_MAX:
+        scaler = ExtendedMinMaxScalar()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
